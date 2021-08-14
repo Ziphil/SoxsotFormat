@@ -11,7 +11,8 @@ import {
 import {
   DocumentBuilder,
   NodeCallback,
-  NodeLike
+  NodeLike,
+  NodeList
 } from "../module";
 import {
   FormatDocument,
@@ -29,7 +30,7 @@ const FONT_FAMILY = EUROPIAN_FONT_FAMILY + ", " + JAPANESE_FONT_FAMILY;
 const SHALEIAN_FONT_FAMILY = EUROPIAN_SHALEIAN_FONT_FAMILY + ", " + JAPANESE_SHALEIAN_FONT_FAMILY;
 
 const FONT_SIZE = "8pt";
-const SHALEIAN_FONT_SIZE = "95%";
+const SHALEIAN_FONT_SIZE = "100%";
 const LINE_HEIGHT = "1.6";
 
 const PAGE_SIZE = {width: "148mm", height: "220mm"};
@@ -171,26 +172,25 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         self.setAttribute("border-bottom-style", "solid");
         self.appendElement("fo:block", (self) => {
           self.resetIndent();
-          self.setAttribute("font-family", SHALEIAN_FONT_FAMILY);
           self.setAttribute("font-weight", "bold");
           self.setAttribute("text-align-last", "justify");
-          self.appendElement("fo:inline", (self) => {
+          self.appendChild(this.buildShaleianText((self) => {
             self.appendElement("fo:retrieve-marker", (self) => {
               self.setAttribute("retrieve-class-name", "name");
               self.setAttribute("retrieve-position", "first-including-carryover");
               self.setAttribute("retrieve-boundary", "page-sequence");
             });
-          });
+          }));
           self.appendElement("fo:leader", (self) => {
             self.setAttribute("leader-pattern", "space");
           });
-          self.appendElement("fo:inline", (self) => {
+          self.appendChild(this.buildShaleianText((self) => {
             self.appendElement("fo:retrieve-marker", (self) => {
               self.setAttribute("retrieve-class-name", "name");
               self.setAttribute("retrieve-position", "last-starting-within-page");
               self.setAttribute("retrieve-boundary", "page-sequence");
             });
-          });
+          }));
         });
       });
     });
@@ -252,11 +252,12 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       self.appendElement("fo:block", (self) => {
         self.appendChild(this.buildTag(part.sort ?? "", HIGHLIGHT_COLOR));
         self.appendElement("fo:inline", (self) => {
-          self.setAttribute("font-family", SHALEIAN_FONT_FAMILY);
           self.setAttribute("font-size", "130%");
           self.setAttribute("font-weight", "bold");
           self.setAttribute("color", HIGHLIGHT_COLOR);
-          self.appendChild(word.name);
+          self.appendChild(this.buildShaleianText((self) => {
+            self.appendChild(word.name);
+          }));
         });
         self.appendElement("fo:inline", (self) => {
           self.setAttribute("space-start", "0.8mm");
@@ -347,6 +348,16 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
+  private buildShaleianText(callback?: FormatNodeCallback): FormatNodeLike {
+    let self = this.createNodeList();
+    self.appendElement("fo:inline", (self) => {
+      self.setAttribute("font-family", SHALEIAN_FONT_FAMILY);
+      self.setAttribute("font-size", SHALEIAN_FONT_SIZE);
+      callback?.call(this, self);
+    });
+    return self;
+  }
+
   private createMarkupResolver(): MarkupResolver<FormatNodeLike, FormatNodeLike> {
     let resolver = new MarkupResolver<FormatNodeLike, FormatNodeLike>({
       resolveLink: (name, children) => {
@@ -357,11 +368,11 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         return node;
       },
       resolveBracket: (children) => {
-        let node = this.createElement("fo:inline");
-        node.setAttribute("font-family", SHALEIAN_FONT_FAMILY);
-        for (let child of children) {
-          node.appendChild(child);
-        }
+        let node = this.buildShaleianText((self) => {
+          for (let child of children) {
+            self.appendChild(child);
+          }
+        });
         return node;
       },
       resolveSlash: (children) => {
