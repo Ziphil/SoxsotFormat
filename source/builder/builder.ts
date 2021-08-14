@@ -21,7 +21,7 @@ import {
 
 const EUROPIAN_FONT_FAMILY = "Linux Libertine G";
 const JAPANESE_FONT_FAMILY = "源ノ明朝";
-const EUROPIAN_SHALEIAN_FONT_FAMILY = "FreeSans";
+const EUROPIAN_SHALEIAN_FONT_FAMILY = "Vekos";
 const JAPANESE_SHALEIAN_FONT_FAMILY = "源ノ角ゴシック";
 const SPECIAL_FONT_FAMILY = "Gill Sans Nova Cn Book";
 
