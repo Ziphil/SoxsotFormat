@@ -100,6 +100,14 @@ export class FormatElement extends SimpleElement<FormatElement, FormatDocument> 
     this.setAttribute("axf:text-justify-trim", "punctuation ideograph inter-word");
   }
 
+  // アクセントに用いている Gill Sans Nova フォントの上下の位置を修正します。
+  // このフォントはディセントが大きいため、ディセンダーがない文字のみで組むと少し上に浮いているような見た目になります。
+  // このメソッドにより、文字の位置を少し下にずらし、文字が浮いてしまうのを防ぐことができます。
+  public fixTextPosition(): void {
+    this.setAttribute("relative-position", "relative");
+    this.setAttribute("top", "0.1em");
+  }
+
 }
 
 
