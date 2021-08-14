@@ -171,6 +171,26 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         self.setAttribute("border-bottom-style", "solid");
         self.appendElement("fo:block", (self) => {
           self.resetIndent();
+          self.setAttribute("font-family", SHALEIAN_FONT_FAMILY);
+          self.setAttribute("font-weight", "bold");
+          self.setAttribute("text-align-last", "justify");
+          self.appendElement("fo:inline", (self) => {
+            self.appendElement("fo:retrieve-marker", (self) => {
+              self.setAttribute("retrieve-class-name", "name");
+              self.setAttribute("retrieve-position", "first-including-carryover");
+              self.setAttribute("retrieve-boundary", "page-sequence");
+            });
+          });
+          self.appendElement("fo:leader", (self) => {
+            self.setAttribute("leader-pattern", "space");
+          });
+          self.appendElement("fo:inline", (self) => {
+            self.appendElement("fo:retrieve-marker", (self) => {
+              self.setAttribute("retrieve-class-name", "name");
+              self.setAttribute("retrieve-position", "last-starting-within-page");
+              self.setAttribute("retrieve-boundary", "page-sequence");
+            });
+          });
         });
       });
     });
@@ -197,6 +217,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
           self.setAttribute("font-size", "1.1em");
           self.setAttribute("font-weight", "bold");
           self.setAttribute("text-align", "center");
+          self.fixTextPosition();
           self.appendElement("fo:page-number");
         });
       });
@@ -224,6 +245,10 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       self.setAttribute("space-after", "1mm");
       self.makeElastic("space-before");
       self.makeElastic("space-after");
+      self.appendElement("fo:marker", (self) => {
+        self.setAttribute("marker-class-name", "name");
+        self.appendChild(word.name);
+      });
       self.appendElement("fo:block", (self) => {
         self.appendChild(this.buildTag(part.sort ?? "", HIGHLIGHT_COLOR));
         self.appendElement("fo:inline", (self) => {
