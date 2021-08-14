@@ -45,7 +45,6 @@ export class FormatDocument extends SimpleDocument<FormatElement, FormatDocument
     let self = this.createNodeList();
     self.appendElement("fo:region-before", (self) => {
       self.setAttribute("extent", extent);
-      self.setAttribute("precedence", "true");
       callback?.call(this, self);
     });
     return self;
@@ -55,7 +54,24 @@ export class FormatDocument extends SimpleDocument<FormatElement, FormatDocument
     let self = this.createNodeList();
     self.appendElement("fo:region-after", (self) => {
       self.setAttribute("extent", extent);
-      self.setAttribute("precedence", "true");
+      callback?.call(this, self);
+    });
+    return self;
+  }
+
+  public createRegionStart(extent: string, callback?: NodeCallback<FormatElement>): NodeLike<FormatElement, string, FormatDocument> {
+    let self = this.createNodeList();
+    self.appendElement("fo:region-start", (self) => {
+      self.setAttribute("extent", extent);
+      callback?.call(this, self);
+    });
+    return self;
+  }
+
+  public createRegionEnd(extent: string, callback?: NodeCallback<FormatElement>): NodeLike<FormatElement, string, FormatDocument> {
+    let self = this.createNodeList();
+    self.appendElement("fo:region-end", (self) => {
+      self.setAttribute("extent", extent);
       callback?.call(this, self);
     });
     return self;
@@ -66,7 +82,7 @@ export class FormatDocument extends SimpleDocument<FormatElement, FormatDocument
 
 export class FormatElement extends SimpleElement<FormatElement, FormatDocument> {
 
-  public makeElastic(attributeName: string) {
+  public makeElastic(attributeName: string): void {
     let originalSpace = this.getAttribute(attributeName);
     if (originalSpace !== null) {
       this.setAttribute(`${attributeName}.maximum`, `(${originalSpace}) * ${MAXIMUM_RATIO}`);
@@ -74,9 +90,14 @@ export class FormatElement extends SimpleElement<FormatElement, FormatDocument> 
     }
   }
 
-  public resetIndent() {
+  public resetIndent(): void {
     this.setAttribute("start-indent", "0mm");
     this.setAttribute("end-indent", "0mm");
+  }
+
+  public justifyText(): void {
+    this.setAttribute("text-align", "justify");
+    this.setAttribute("axf:text-justify-trim", "punctuation ideograph inter-word");
   }
 
 }
