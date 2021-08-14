@@ -12,7 +12,7 @@
 
 ## インストール
 [npm](https://www.npmjs.com/package/soxsot-format) からインストールしてください。
-また準備中です。
+まだ準備中です。
 ```
 npm i soxsot-format
 ```
