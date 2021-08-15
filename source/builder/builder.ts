@@ -34,9 +34,10 @@ const SHALEIAN_FONT_SIZE = "100%";
 const LINE_HEIGHT = "1.2";
 
 const PAGE_SIZE = {width: "148mm", height: "220mm"};
-const PAGE_SPACES = {top: "15mm", bottom: "15mm", outer: "12mm", inner: "18mm"};
-const HEADER_EXTENT = "12mm";
-const FOOTER_EXTENT = "12mm";
+const PAGE_SPACES = {top: "15mm", bottom: "15mm", outer: "14mm", inner: "18mm"};
+const HEADER_EXTENT = "11mm";
+const FOOTER_EXTENT = "11mm";
+const SIDE_EXTENT = "8mm";
 const BLEED_SIZE = "0mm";
 const COLUMN_GAP = "3mm";
 
@@ -92,6 +93,9 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         self.setAttribute("region-name", "main.left-footer");
         self.setAttribute("precedence", "true");
       }));
+      self.appendChild(this.document.createRegionStart(SIDE_EXTENT, (self) => {
+        self.setAttribute("region-name", "main.left-side");
+      }));
     }));
     self.appendChild(this.document.createPageMaster(PAGE_SIZE, BLEED_SIZE, (self) => {
       self.setAttribute("master-name", "main.right");
@@ -107,6 +111,9 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       self.appendChild(this.document.createRegionAfter(FOOTER_EXTENT, (self) => {
         self.setAttribute("region-name", "main.right-footer");
         self.setAttribute("precedence", "true");
+      }));
+      self.appendChild(this.document.createRegionEnd(SIDE_EXTENT, (self) => {
+        self.setAttribute("region-name", "main.right-side");
       }));
     }));
     self.appendElement("fo:page-sequence-master", (self) => {
@@ -145,6 +152,14 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       self.appendElement("fo:static-content", (self) => {
         self.setAttribute("flow-name", "main.right-footer");
         self.appendChild(this.buildFooter("right"));
+      });
+      self.appendElement("fo:static-content", (self) => {
+        self.setAttribute("flow-name", "main.left-side");
+        self.appendChild(this.buildSide("left"));
+      });
+      self.appendElement("fo:static-content", (self) => {
+        self.setAttribute("flow-name", "main.right-side");
+        self.appendChild(this.buildSide("right"));
       });
       self.appendElement("fo:flow", (self) => {
         self.setAttribute("flow-name", "main.body");
@@ -226,6 +241,22 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
+  private buildSide(position: "left" | "right"): FormatNodeLike {
+    let self = this.createNodeList();
+    self.appendElement("fo:block-container", (self) => {
+      self.setAttribute("width", `${SIDE_EXTENT} + ${BLEED_SIZE}`);
+      self.setAttribute("height", `${PAGE_SIZE.height} - ${PAGE_SPACES.top} - ${PAGE_SPACES.bottom}`);
+      self.setAttribute("margin-top", `${PAGE_SPACES.top} - ${HEADER_EXTENT} + (${PAGE_SIZE.height} - ${PAGE_SPACES.top} - ${PAGE_SPACES.bottom} - 6mm * 21 - 2mm * 20) div 2`);
+      self.setAttribute(`margin-${position}`, `-1 * ${BLEED_SIZE}`);
+      self.appendElement("fo:retrieve-marker", (self) => {
+        self.setAttribute("retrieve-class-name", `${position}-side`);
+        self.setAttribute("retrieve-position", "first-starting-within-page");
+        self.setAttribute("retrieve-boundary", "page-sequence");
+      });
+    });
+    return self;
+  }
+
   private buildDictionaryBlock(dictionary: Dictionary): FormatNodeLike {
     let self = this.createNodeList();
     let words = Word.sortWords(Array.from(dictionary.words));
@@ -235,7 +266,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     for (let word of words) {
       let initialAlphabet = word.name.replace(/['\+\-]/, "").charAt(0);
       if ("aáàâeéèêiíìîoóòôuúùû".indexOf(initialAlphabet) >= 0) {
-        initialAlphabet = "vowel";
+        initialAlphabet = "a";
       }
       if (currentInitialAlphabet !== initialAlphabet) {
         currentInitialAlphabet = initialAlphabet;
@@ -261,6 +292,18 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         self.setAttribute("marker-class-name", "alphabet");
         self.appendChild(alphabet);
       });
+      self.appendElement("fo:marker", (self) => {
+        self.setAttribute("marker-class-name", "left-side");
+        self.appendElement("fo:block", (self) => {
+          self.appendChild(this.buildAlphabetList(alphabet, "left"));
+        });
+      });
+      self.appendElement("fo:marker", (self) => {
+        self.setAttribute("marker-class-name", "right-side");
+        self.appendElement("fo:block", (self) => {
+          self.appendChild(this.buildAlphabetList(alphabet, "right"));
+        });
+      });
       self.appendElement("fo:block", (self) => {
         self.setAttribute("space-after", "2mm");
         self.setAttribute("space-after.conditionality", "retain");
@@ -278,7 +321,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
             self.setAttribute("border-top-style", "double");
             self.setAttribute("border-bottom-style", "double");
             self.appendChild(this.buildShaleianText((self) => {
-              self.appendChild((alphabet === "vowel") ? "a–u" : alphabet);
+              self.appendChild((alphabet === "a") ? "a–u" : alphabet);
             }));
           });
         });
@@ -288,6 +331,38 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         self.appendChild(this.buildWordBlock(parsedWord));
       }
     });
+    return self;
+  }
+
+  private buildAlphabetList(alphabet: string, position: "left" | "right"): FormatNodeLike {
+    let self = this.createNodeList();
+    let oppositePosition = (position === "left") ? "right" : "left";
+    let alphabets = "sztdkgfvpbcqxjlrnmyha";
+    for (let currentAlphabet of alphabets) {
+      self.appendElement("fo:block-container", (self) => {
+        self.setAttribute("space-before", "2mm");
+        self.setAttribute("height", "6mm");
+        self.setAttribute(`padding-${position}`, `2mm + ${BLEED_SIZE}`);
+        self.setAttribute(`axf:border-top-${oppositePosition}-radius`, "1mm");
+        self.setAttribute(`axf:border-bottom-${oppositePosition}-radius`, "1mm");
+        self.setAttribute("display-align", "center");
+        if (currentAlphabet === alphabet) {
+          self.setAttribute("font-size", "130%");
+          self.setAttribute("font-weight", "bold");
+          self.setAttribute("color", "white");
+          self.setAttribute("background-color", HIGHLIGHT_COLOR);
+        } else {
+          self.setAttribute("color", HIGHLIGHT_COLOR);
+        }
+        self.appendElement("fo:block", (self) => {
+          self.setAttribute("text-align", "center");
+          self.appendChild(this.buildShaleianText((self) => {
+            self.setAttribute("font-family", EUROPIAN_SHALEIAN_FONT_FAMILY);
+            self.appendChild(currentAlphabet);
+          }));
+        });
+      });
+    }
     return self;
   }
 
