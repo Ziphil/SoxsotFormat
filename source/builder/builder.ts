@@ -34,7 +34,7 @@ const SHALEIAN_FONT_SIZE = "100%";
 const LINE_HEIGHT = "1.2";
 
 const PAGE_SIZE = {width: "148mm", height: "220mm"};
-const PAGE_SPACES = {top: "15mm", bottom: "15mm", outer: "18mm", inner: "12mm"};
+const PAGE_SPACES = {top: "15mm", bottom: "15mm", outer: "12mm", inner: "18mm"};
 const HEADER_EXTENT = "12mm";
 const FOOTER_EXTENT = "12mm";
 const BLEED_SIZE = "0mm";
