@@ -299,6 +299,15 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         self.appendElement("fo:inline", (self) => {
           self.setAttribute("space-start", "1.2mm");
           self.appendChild(this.buildTag(equivalent.category ?? "", GRAY_COLOR));
+          if (equivalent.frame !== null) {
+            self.appendElement("fo:inline", (self) => {
+              self.setAttribute("space-end", "0.8mm");
+              self.setAttribute("font-size", "80%");
+              self.appendChild("(");
+              self.appendChild(equivalent.frame!);
+              self.appendChild(")");
+            });
+          }
           self.appendElement("fo:inline", (self) => {
             for (let i = 0 ; i < equivalent.names.length ; i ++) {
               self.appendElement("fo:inline", (self) => {
