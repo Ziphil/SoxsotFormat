@@ -242,7 +242,9 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     let part = word.parts["ja"]!;
     self.appendElement("fo:block", (self) => {
       self.setAttribute("space-before", "1mm");
+      self.setAttribute("space-before.conditionality", "discard");
       self.setAttribute("space-after", "1mm");
+      self.setAttribute("space-after.conditionality", "discard");
       self.makeElastic("space-before");
       self.makeElastic("space-after");
       self.appendElement("fo:marker", (self) => {
@@ -250,12 +252,15 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         self.appendChild(word.name);
       });
       self.appendElement("fo:block", (self) => {
+        self.setAttribute("keep-with-next.within-column", "always");
+        self.setAttribute("keep-with-next.within-page", "always");
         self.appendChild(this.buildTag(part.sort ?? "", HIGHLIGHT_COLOR));
         self.appendElement("fo:inline", (self) => {
           self.setAttribute("font-size", "130%");
           self.setAttribute("font-weight", "bold");
           self.setAttribute("color", HIGHLIGHT_COLOR);
           self.appendChild(this.buildShaleianText((self) => {
+            self.setAttribute("font-family", EUROPIAN_SHALEIAN_FONT_FAMILY);
             self.appendChild(word.name);
           }));
         });
@@ -273,11 +278,19 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
 
   private buildSectionBlock(section: Section<FormatNodeLike>): FormatNodeLike {
     let self = this.createNodeList();
+    self.appendChild(this.buildEquivalentBlock(section));
+    self.appendChild(this.buildUsageBlock(section));
+    return self;
+  }
+
+  private buildEquivalentBlock(section: Section<FormatNodeLike>): FormatNodeLike {
+    let self = this.createNodeList();
     let equivalents = section.getEquivalents(true);
     let meaningInformation = section.getNormalInformations(true).find((information) => information.kind === "meaning");
-    let normalInformations = section.getNormalInformations(true).filter((information) => information.kind !== "meaning");
     self.appendElement("fo:block", (self) => {
       self.setAttribute("start-indent", "2mm");
+      self.setAttribute("widows", "1");
+      self.setAttribute("orphans", "1");
       self.justifyText();
       for (let equivalent of equivalents) {
         self.appendElement("fo:inline", (self) => {
@@ -303,15 +316,20 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         });
       }
     });
-    for (let information of normalInformations) {
+    return self;
+  }
+
+  private buildUsageBlock(section: Section<FormatNodeLike>): FormatNodeLike {
+    let self = this.createNodeList();
+    let usageInformations = section.getNormalInformations(true).filter((information) => information.kind === "usage");
+    for (let information of usageInformations) {
       self.appendElement("fo:block", (self) => {
         self.setAttribute("start-indent", "2mm");
+        self.setAttribute("widows", "1");
+        self.setAttribute("orphans", "1");
         self.justifyText();
         self.appendElement("fo:inline", (self) => {
-          self.appendChild(this.buildSmallHeader(information.getKindName("ja") ?? ""));
-          self.appendElement("fo:inline", (self) => {
-            self.appendChild(information.text);
-          });
+          self.appendChild(information.text);
         });
       });
     }
