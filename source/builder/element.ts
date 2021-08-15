@@ -82,11 +82,11 @@ export class FormatDocument extends SimpleDocument<FormatElement, FormatDocument
 
 export class FormatElement extends SimpleElement<FormatElement, FormatDocument> {
 
-  public makeElastic(attributeName: string): void {
+  public makeElastic(attributeName: string, minimumRatio?: number, maximumRatio?: number): void {
     let originalSpace = this.getAttribute(attributeName);
     if (originalSpace !== null) {
-      this.setAttribute(`${attributeName}.maximum`, `(${originalSpace}) * ${MAXIMUM_RATIO}`);
-      this.setAttribute(`${attributeName}.minimum`, `(${originalSpace}) * ${MINIMUM_RATIO}`);
+      this.setAttribute(`${attributeName}.minimum`, `(${originalSpace}) * ${minimumRatio ?? MINIMUM_RATIO}`);
+      this.setAttribute(`${attributeName}.maximum`, `(${originalSpace}) * ${maximumRatio ?? MAXIMUM_RATIO}`);
     }
   }
 

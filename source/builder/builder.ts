@@ -229,12 +229,65 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
   private buildDictionaryBlock(dictionary: Dictionary): FormatNodeLike {
     let self = this.createNodeList();
     let words = Word.sortWords(Array.from(dictionary.words));
+    let alphabetData = [] as Array<[string, Array<Word>]>;
+    let currentInitialAlphabet = null as string | null;
+    let currentWords = [] as Array<Word>;
+    for (let word of words) {
+      let initialAlphabet = word.name.replace(/['\+\-]/, "").charAt(0);
+      if ("aáàâeéèêiíìîoóòôuúùû".indexOf(initialAlphabet) >= 0) {
+        initialAlphabet = "vowel";
+      }
+      if (currentInitialAlphabet !== initialAlphabet) {
+        currentInitialAlphabet = initialAlphabet;
+        currentWords = [];
+        alphabetData.push([initialAlphabet, currentWords]);
+      }
+      currentWords.push(word);
+    }
+    for (let [alphabet, words] of alphabetData) {
+      self.appendChild(this.buildAlphabetBlock(alphabet, words));
+    }
+    return self;
+  }
+
+  private buildAlphabetBlock(alphabet: string, words: Array<Word>): FormatNodeLike {
+    let self = this.createNodeList();
     let resolver = this.createMarkupResolver();
     let parser = new Parser(resolver);
-    for (let word of words) {
-      let parsedWord = parser.parse(word);
-      self.appendChild(this.buildWordBlock(parsedWord));
-    }
+    self.appendElement("fo:block", (self) => {
+      self.setAttribute("break-before", "page");
+      self.setAttribute("break-after", "page");
+      self.appendElement("fo:marker", (self) => {
+        self.setAttribute("marker-class-name", "alphabet");
+        self.appendChild(alphabet);
+      });
+      self.appendElement("fo:block", (self) => {
+        self.setAttribute("space-after", "2mm");
+        self.setAttribute("space-after.conditionality", "retain");
+        self.setAttribute("text-align-last", "center");
+        self.setAttribute("span", "all");
+        self.appendElement("fo:inline-container", (self) => {
+          self.setAttribute("width", "30%");
+          self.appendElement("fo:block", (self) => {
+            self.setAttribute("font-size", "200%");
+            self.setAttribute("font-weight", "bold");
+            self.setAttribute("border-top-width", "0.6mm");
+            self.setAttribute("border-bottom-width", "0.6mm");
+            self.setAttribute("border-top-color", HIGHLIGHT_COLOR);
+            self.setAttribute("border-bottom-color", HIGHLIGHT_COLOR);
+            self.setAttribute("border-top-style", "double");
+            self.setAttribute("border-bottom-style", "double");
+            self.appendChild(this.buildShaleianText((self) => {
+              self.appendChild((alphabet === "vowel") ? "a–u" : alphabet);
+            }));
+          });
+        });
+      });
+      for (let word of words) {
+        let parsedWord = parser.parse(word);
+        self.appendChild(this.buildWordBlock(parsedWord));
+      }
+    });
     return self;
   }
 
@@ -293,7 +346,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       self.setAttribute("widows", "1");
       self.setAttribute("orphans", "1");
       self.setAttribute("line-height", LINE_HEIGHT);
-      self.makeElastic("line-height");
+      self.makeElastic("line-height", 0.9, 1);
       self.justifyText();
       for (let equivalent of equivalents) {
         self.appendElement("fo:inline", (self) => {
@@ -340,7 +393,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         self.setAttribute("widows", "1");
         self.setAttribute("orphans", "1");
         self.setAttribute("line-height", LINE_HEIGHT);
-        self.makeElastic("line-height");
+        self.makeElastic("line-height", 0.9, 1);
         self.justifyText();
         self.appendElement("fo:inline", (self) => {
           self.appendChild(information.text);
