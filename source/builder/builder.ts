@@ -416,6 +416,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     let self = this.createNodeList();
     self.appendChild(this.buildEquivalentBlock(section));
     self.appendChild(this.buildUsageBlock(section));
+    self.appendChild(this.buildPhraseBlock(section));
+    self.appendChild(this.buildExampleBlock(section));
     return self;
   }
 
@@ -485,6 +487,67 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
+  private buildPhraseBlock(section: Section<FormatNodeLike>): FormatNodeLike {
+    let self = this.createNodeList();
+    let phraseInformations = section.getPhraseInformations(true);
+    for (let information of phraseInformations) {
+      self.appendElement("fo:block", (self) => {
+        self.setAttribute("start-indent", "2mm");
+        self.setAttribute("widows", "1");
+        self.setAttribute("orphans", "1");
+        self.setAttribute("line-height", LINE_HEIGHT);
+        self.makeElastic("line-height", 0.9, 1);
+        self.justifyText();
+        self.appendElement("fo:inline", (self) => {
+          self.appendElement("fo:inline", (self) => {
+            self.setAttribute("font-weight", "bold");
+            self.appendChild(information.expression);
+          });
+          self.appendChild(this.buildExampleSeparator());
+          self.appendElement("fo:inline", (self) => {
+            for (let i = 0 ; i < information.equivalentNames.length ; i ++) {
+              self.appendElement("fo:inline", (self) => {
+                self.setAttribute("font-weight", "bold");
+                self.appendChild(information.equivalentNames[i]);
+              });
+              if (i !== information.equivalentNames.length - 1) {
+                self.appendChild(", ");
+              }
+            }
+          });
+          if (information.text !== null && information.text.toString() !== "?") {
+            self.appendChild(this.buildPhraseSeparator());
+            self.appendElement("fo:inline", (self) => {
+              self.appendChild(information.text!);
+            });
+          }
+        });
+      });
+    }
+    return self;
+  }
+
+  private buildExampleBlock(section: Section<FormatNodeLike>): FormatNodeLike {
+    let self = this.createNodeList();
+    let exampleInformations = section.getExampleInformations(true);
+    for (let information of exampleInformations) {
+      self.appendElement("fo:block", (self) => {
+        self.setAttribute("start-indent", "2mm");
+        self.setAttribute("widows", "1");
+        self.setAttribute("orphans", "1");
+        self.setAttribute("line-height", LINE_HEIGHT);
+        self.makeElastic("line-height", 0.9, 1);
+        self.justifyText();
+        self.appendElement("fo:inline", (self) => {
+          self.appendChild(information.sentence);
+          self.appendChild(this.buildExampleSeparator());
+          self.appendChild(information.translation);
+        });
+      });
+    }
+    return self;
+  }
+
   private buildTag(string: string, backgroundColor: string): FormatNodeLike {
     let self = this.createNodeList();
     self.appendElement("fo:inline-container", (self) => {
@@ -531,6 +594,34 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       self.setAttribute("relative-position", "relative");
       self.setAttribute("bottom", "0.2em");
       self.appendChild("||");
+    });
+    return self;
+  }
+
+  private buildPhraseSeparator(): FormatNodeLike {
+    let self = this.createNodeList();
+    self.appendElement("fo:inline", (self) => {
+      self.setAttribute("space-start", "1mm");
+      self.setAttribute("space-end", "1mm");
+      self.setAttribute("font-size", "80%");
+      self.setAttribute("color", GRAY_COLOR);
+      self.setAttribute("relative-position", "relative");
+      self.setAttribute("bottom", "0.2em");
+      self.appendChild("||");
+    });
+    return self;
+  }
+
+  private buildExampleSeparator(): FormatNodeLike {
+    let self = this.createNodeList();
+    self.appendElement("fo:inline", (self) => {
+      self.setAttribute("space-start", "1mm");
+      self.setAttribute("space-end", "1mm");
+      self.setAttribute("font-size", "90%");
+      self.setAttribute("color", GRAY_COLOR);
+      self.setAttribute("relative-position", "relative");
+      self.setAttribute("bottom", "0.1em");
+      self.appendChild("▶");
     });
     return self;
   }
