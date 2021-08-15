@@ -31,7 +31,7 @@ const SHALEIAN_FONT_FAMILY = EUROPIAN_SHALEIAN_FONT_FAMILY + ", " + JAPANESE_SHA
 
 const FONT_SIZE = "8pt";
 const SHALEIAN_FONT_SIZE = "100%";
-const LINE_HEIGHT = "1.6";
+const LINE_HEIGHT = "1.2";
 
 const PAGE_SIZE = {width: "148mm", height: "220mm"};
 const PAGE_SPACES = {top: "15mm", bottom: "15mm", outer: "18mm", inner: "12mm"};
@@ -172,6 +172,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         self.setAttribute("border-bottom-style", "solid");
         self.appendElement("fo:block", (self) => {
           self.resetIndent();
+          self.setAttribute("padding-bottom", "0.2mm");
           self.setAttribute("font-weight", "bold");
           self.setAttribute("text-align-last", "justify");
           self.appendChild(this.buildShaleianText((self) => {
@@ -291,6 +292,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       self.setAttribute("start-indent", "2mm");
       self.setAttribute("widows", "1");
       self.setAttribute("orphans", "1");
+      self.setAttribute("line-height", LINE_HEIGHT);
+      self.makeElastic("line-height");
       self.justifyText();
       for (let equivalent of equivalents) {
         self.appendElement("fo:inline", (self) => {
@@ -327,6 +330,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         self.setAttribute("start-indent", "2mm");
         self.setAttribute("widows", "1");
         self.setAttribute("orphans", "1");
+        self.setAttribute("line-height", LINE_HEIGHT);
+        self.makeElastic("line-height");
         self.justifyText();
         self.appendElement("fo:inline", (self) => {
           self.appendChild(information.text);
