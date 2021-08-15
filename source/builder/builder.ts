@@ -39,7 +39,10 @@ const HEADER_EXTENT = "11mm";
 const FOOTER_EXTENT = "11mm";
 const SIDE_EXTENT = "8mm";
 const BLEED_SIZE = "0mm";
+
 const COLUMN_GAP = "3mm";
+const ALPHABET_INDEX_HEIGHT = "6mm";
+const ALPHABET_INDEX_GAP = "2mm";
 
 const TEXT_COLOR = "rgb-icc(#CMYK, 0, 0, 0, 1)";
 const HIGHLIGHT_COLOR = "rgb-icc(#CMYK, 0, 0.8, 0, 0)";
@@ -246,12 +249,16 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     self.appendElement("fo:block-container", (self) => {
       self.setAttribute("width", `${SIDE_EXTENT} + ${BLEED_SIZE}`);
       self.setAttribute("height", `${PAGE_SIZE.height} - ${PAGE_SPACES.top} - ${PAGE_SPACES.bottom}`);
-      self.setAttribute("margin-top", `${PAGE_SPACES.top} - ${HEADER_EXTENT} + (${PAGE_SIZE.height} - ${PAGE_SPACES.top} - ${PAGE_SPACES.bottom} - 6mm * 21 - 2mm * 20) div 2`);
+      self.setAttribute("margin-top", `${PAGE_SPACES.top} - ${HEADER_EXTENT}`);
       self.setAttribute(`margin-${position}`, `-1 * ${BLEED_SIZE}`);
-      self.appendElement("fo:retrieve-marker", (self) => {
-        self.setAttribute("retrieve-class-name", `${position}-side`);
-        self.setAttribute("retrieve-position", "first-starting-within-page");
-        self.setAttribute("retrieve-boundary", "page-sequence");
+      self.appendElement("fo:block", (self) => {
+        self.setAttribute("margin-top", `(${PAGE_SIZE.height} - ${PAGE_SPACES.top} - ${PAGE_SPACES.bottom} - ${ALPHABET_INDEX_HEIGHT} * 21 - ${ALPHABET_INDEX_GAP} * 20) div 2`);
+        self.setAttribute("margin-top.conditionality", "retain");
+        self.appendElement("fo:retrieve-marker", (self) => {
+          self.setAttribute("retrieve-class-name", `${position}-side`);
+          self.setAttribute("retrieve-position", "first-starting-within-page");
+          self.setAttribute("retrieve-boundary", "page-sequence");
+        });
       });
     });
     return self;
@@ -295,13 +302,13 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       self.appendElement("fo:marker", (self) => {
         self.setAttribute("marker-class-name", "left-side");
         self.appendElement("fo:block", (self) => {
-          self.appendChild(this.buildAlphabetList(alphabet, "left"));
+          self.appendChild(this.buildAlphabetIndexes(alphabet, "left"));
         });
       });
       self.appendElement("fo:marker", (self) => {
         self.setAttribute("marker-class-name", "right-side");
         self.appendElement("fo:block", (self) => {
-          self.appendChild(this.buildAlphabetList(alphabet, "right"));
+          self.appendChild(this.buildAlphabetIndexes(alphabet, "right"));
         });
       });
       self.appendElement("fo:block", (self) => {
@@ -334,14 +341,14 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildAlphabetList(alphabet: string, position: "left" | "right"): FormatNodeLike {
+  private buildAlphabetIndexes(alphabet: string, position: "left" | "right"): FormatNodeLike {
     let self = this.createNodeList();
     let oppositePosition = (position === "left") ? "right" : "left";
     let alphabets = "sztdkgfvpbcqxjlrnmyha";
     for (let currentAlphabet of alphabets) {
       self.appendElement("fo:block-container", (self) => {
-        self.setAttribute("space-before", "2mm");
-        self.setAttribute("height", "6mm");
+        self.setAttribute("space-before", ALPHABET_INDEX_GAP);
+        self.setAttribute("height", ALPHABET_INDEX_HEIGHT);
         self.setAttribute(`padding-${position}`, `2mm + ${BLEED_SIZE}`);
         self.setAttribute(`axf:border-top-${oppositePosition}-radius`, "1mm");
         self.setAttribute(`axf:border-bottom-${oppositePosition}-radius`, "1mm");
