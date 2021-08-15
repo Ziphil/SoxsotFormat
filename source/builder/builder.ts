@@ -405,30 +405,36 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
 
   private buildTag(string: string, backgroundColor: string): FormatNodeLike {
     let self = this.createNodeList();
-    self.appendElement("fo:inline", (self) => {
-      self.setAttribute("space-end", "0.8mm");
-      self.setAttribute("padding", "0.1em 0.1em");
-      self.setAttribute("font-size", "75%");
-      self.setAttribute("color", "white");
-      self.setAttribute("background-color", backgroundColor);
-      self.setAttribute("axf:border-radius", "0.2em");
-      self.appendChild(string);
+    self.appendElement("fo:inline-container", (self) => {
+      self.setAttribute("space-end", "1mm");
+      self.appendElement("fo:block", (self) => {
+        self.resetIndent();
+        self.setAttribute("padding", "0em 0.1em");
+        self.setAttribute("font-size", "75%");
+        self.setAttribute("color", "white");
+        self.setAttribute("background-color", backgroundColor);
+        self.setAttribute("axf:border-radius", "0.2em");
+        self.appendChild(string);
+      });
     });
     return self;
   }
 
   private buildSmallHeader(string: string): FormatNodeLike {
     let self = this.createNodeList();
-    self.appendElement("fo:inline", (self) => {
-      self.setAttribute("space-end", "0.8mm");
-      self.setAttribute("padding", "0.1em 0.1em");
-      self.setAttribute("font-size", "75%");
-      self.setAttribute("color", GRAY_COLOR);
-      self.setAttribute("border-width", "0.1mm");
-      self.setAttribute("border-color", GRAY_COLOR);
-      self.setAttribute("border-style", "solid");
-      self.setAttribute("axf:border-radius", "0.2em");
-      self.appendChild(string);
+    self.appendElement("fo:inline-container", (self) => {
+      self.setAttribute("space-end", "1mm");
+      self.appendElement("fo:block", (self) => {
+        self.resetIndent();
+        self.setAttribute("padding", "0em 0.1em");
+        self.setAttribute("font-size", "75%");
+        self.setAttribute("color", GRAY_COLOR);
+        self.setAttribute("border-width", "0.1mm");
+        self.setAttribute("border-color", GRAY_COLOR);
+        self.setAttribute("border-style", "solid");
+        self.setAttribute("axf:border-radius", "0.2em");
+        self.appendChild(string);
+      });
     });
     return self;
   }
