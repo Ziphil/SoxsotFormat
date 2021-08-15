@@ -445,17 +445,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
               self.appendChild(")");
             });
           }
-          self.appendElement("fo:inline", (self) => {
-            for (let i = 0 ; i < equivalent.names.length ; i ++) {
-              self.appendElement("fo:inline", (self) => {
-                self.setAttribute("font-weight", "bold");
-                self.appendChild(equivalent.names[i]);
-              });
-              if (i !== equivalent.names.length - 1) {
-                self.appendChild(", ");
-              }
-            }
-          });
+          self.appendChild(this.buildEquivalentNames(equivalent.names));
         });
       }
       if (meaningInformation !== undefined && meaningInformation.text.toString() !== "?") {
@@ -504,19 +494,9 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
             self.appendChild(information.expression);
           });
           self.appendChild(this.buildExampleSeparator());
-          self.appendElement("fo:inline", (self) => {
-            for (let i = 0 ; i < information.equivalentNames.length ; i ++) {
-              self.appendElement("fo:inline", (self) => {
-                self.setAttribute("font-weight", "bold");
-                self.appendChild(information.equivalentNames[i]);
-              });
-              if (i !== information.equivalentNames.length - 1) {
-                self.appendChild(", ");
-              }
-            }
-          });
+          self.appendChild(this.buildEquivalentNames(information.equivalentNames));
           if (information.text !== null && information.text.toString() !== "?") {
-            self.appendChild(this.buildPhraseSeparator());
+            self.appendChild(this.buildEquivalentSeparator());
             self.appendElement("fo:inline", (self) => {
               self.appendChild(information.text!);
             });
@@ -545,6 +525,22 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         });
       });
     }
+    return self;
+  }
+
+  private buildEquivalentNames(names: ReadonlyArray<FormatNodeLike>): FormatNodeLike {
+    let self = this.createNodeList();
+    self.appendElement("fo:inline", (self) => {
+      for (let i = 0 ; i < names.length ; i ++) {
+        self.appendElement("fo:inline", (self) => {
+          self.setAttribute("font-weight", "bold");
+          self.appendChild(names[i]);
+        });
+        if (i !== names.length - 1) {
+          self.appendChild(", ");
+        }
+      }
+    });
     return self;
   }
 
@@ -585,20 +581,6 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
   }
 
   private buildEquivalentSeparator(): FormatNodeLike {
-    let self = this.createNodeList();
-    self.appendElement("fo:inline", (self) => {
-      self.setAttribute("space-start", "1mm");
-      self.setAttribute("space-end", "1mm");
-      self.setAttribute("font-size", "80%");
-      self.setAttribute("color", GRAY_COLOR);
-      self.setAttribute("relative-position", "relative");
-      self.setAttribute("bottom", "0.2em");
-      self.appendChild("||");
-    });
-    return self;
-  }
-
-  private buildPhraseSeparator(): FormatNodeLike {
     let self = this.createNodeList();
     self.appendElement("fo:inline", (self) => {
       self.setAttribute("space-start", "1mm");
