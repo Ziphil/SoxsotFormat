@@ -15,7 +15,7 @@ import {
 async function typeset(path: string): Promise<void> {
   let loader = new DirectoryLoader(path);
   let dictionary = await loader.asPromise();
-  let builder = new DictionaryFormatBuilder();
+  let builder = new DictionaryFormatBuilder("ja");
   let documentString = builder.convert(dictionary);
   await fs.mkdir("./out", {recursive: true});
   await fs.writeFile("./out/main.fo", documentString, {encoding: "utf8"});

@@ -51,6 +51,13 @@ const GRAY_COLOR = "rgb-icc(#CMYK, 0, 0, 0, 0.6)";
 
 export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, string, FormatDocument> {
 
+  private readonly language: string;
+
+  public constructor(language: string) {
+    super();
+    this.language = language;
+  }
+
   public convert(dictionary: Dictionary): string {
     let document = this.buildRoot(dictionary);
     let output = document.toString();
@@ -66,7 +73,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     let self = this.buildDocument("fo:root", (self) => {
       self.setAttribute("xmlns:fo", "http://www.w3.org/1999/XSL/Format");
       self.setAttribute("xmlns:axf", "http://www.antennahouse.com/names/XSL/Extensions");
-      self.setAttribute("xml:lang", "ja");
+      self.setAttribute("xml:lang", this.language);
       self.setAttribute("font-family", FONT_FAMILY);
       self.setAttribute("font-size", FONT_SIZE);
       self.setAttribute("color", TEXT_COLOR);
@@ -375,7 +382,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
 
   private buildWordBlock(word: ParsedWord<FormatNodeLike>): FormatNodeLike {
     let self = this.createNodeList();
-    let part = word.parts["ja"]!;
+    let part = word.parts[this.language]!;
     self.appendElement("fo:block", (self) => {
       self.setAttribute("space-before", "1mm");
       self.setAttribute("space-before.conditionality", "discard");
