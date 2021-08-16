@@ -1,6 +1,6 @@
 {
   "name": "soxsot-format",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Ziphil",
   "description": "Outputs an XSL-FO string for publication from a Shaleian dictionary data",
   "homepage": "https://github.com/Ziphil/SoxsotFormat",
@@ -8,12 +8,12 @@
   "main": "dist/index.js",
   "scripts": {
     "develop": "ts-node source/index.ts",
-    "build": "tsc",
+    "build": "tsc --project tsconfig-build.json",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "experiment": "ts-node test/experiment.ts",
-    "prepare": "tsc"
+    "prepare": "tsc --project tsconfig-build.json"
   },
   "eslintConfig": {
     "extends": "ziphil"
