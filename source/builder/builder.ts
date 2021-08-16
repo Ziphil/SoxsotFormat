@@ -48,13 +48,27 @@ const TEXT_COLOR = "rgb-icc(#CMYK, 0, 0, 0, 1)";
 const HIGHLIGHT_COLOR = "rgb-icc(#CMYK, 0, 0.8, 0, 0)";
 const GRAY_COLOR = "rgb-icc(#CMYK, 0, 0, 0, 0.6)";
 
+const ALPHABETS = "sztdkgfvpbcqxjlrnmyha";
+const VOWEL_ALPHABETS = "aáàâeéèêiíìîoóòôuúùû";
+
 
 export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, string, FormatDocument> {
 
+  private readonly language: string;
+
+  public constructor(language: string) {
+    super();
+    this.language = language;
+  }
+
   public convert(dictionary: Dictionary): string {
-    let document = this.buildRoot(dictionary);
-    let output = document.toString();
-    return output;
+    if (dictionary.settings.version === "S") {
+      let document = this.buildRoot(dictionary);
+      let output = document.toString();
+      return output;
+    } else {
+      throw new Error("unsupported version");
+    }
   }
 
   protected createDocument(tagName: string): FormatDocument {
@@ -66,7 +80,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     let self = this.buildDocument("fo:root", (self) => {
       self.setAttribute("xmlns:fo", "http://www.w3.org/1999/XSL/Format");
       self.setAttribute("xmlns:axf", "http://www.antennahouse.com/names/XSL/Extensions");
-      self.setAttribute("xml:lang", "ja");
+      self.setAttribute("xml:lang", this.language);
       self.setAttribute("font-family", FONT_FAMILY);
       self.setAttribute("font-size", FONT_SIZE);
       self.setAttribute("color", TEXT_COLOR);
@@ -74,6 +88,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       self.appendElement("fo:layout-master-set", (self) => {
         self.appendChild(this.buildMainPageMaster());
       });
+      self.appendChild(this.buildBookmark());
       self.appendChild(this.buildMainPageSequence(dictionary));
     });
     return self;
@@ -167,9 +182,24 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       self.appendElement("fo:flow", (self) => {
         self.setAttribute("flow-name", "main.body");
         self.appendElement("fo:block", (self) => {
-          self.appendChild(this.buildDictionaryBlock(dictionary));
+          self.appendChild(this.buildDictionary(dictionary));
         });
       });
+    });
+    return self;
+  }
+
+  private buildBookmark(): FormatNodeLike {
+    let self = this.createNodeList();
+    self.appendElement("fo:bookmark-tree", (self) => {
+      for (let alphabet of ALPHABETS) {
+        self.appendElement("fo:bookmark", (self) => {
+          self.setAttribute("internal-destination", `alphabet-${alphabet}`);
+          self.appendElement("fo:bookmark-title", (self) => {
+            self.appendChild((alphabet === "a") ? "a–u" : alphabet);
+          });
+        });
+      }
     });
     return self;
   }
@@ -264,35 +294,22 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildDictionaryBlock(dictionary: Dictionary): FormatNodeLike {
+  private buildDictionary(dictionary: Dictionary): FormatNodeLike {
     let self = this.createNodeList();
     let words = Word.sortWords(Array.from(dictionary.words));
-    let alphabetData = [] as Array<[string, Array<Word>]>;
-    let currentInitialAlphabet = null as string | null;
-    let currentWords = [] as Array<Word>;
-    for (let word of words) {
-      let initialAlphabet = word.name.replace(/['\+\-]/, "").charAt(0);
-      if ("aáàâeéèêiíìîoóòôuúùû".indexOf(initialAlphabet) >= 0) {
-        initialAlphabet = "a";
-      }
-      if (currentInitialAlphabet !== initialAlphabet) {
-        currentInitialAlphabet = initialAlphabet;
-        currentWords = [];
-        alphabetData.push([initialAlphabet, currentWords]);
-      }
-      currentWords.push(word);
-    }
-    for (let [alphabet, words] of alphabetData) {
-      self.appendChild(this.buildAlphabetBlock(alphabet, words));
+    let groupedWords = this.createGroupedWords(words);
+    for (let [alphabet, words] of groupedWords) {
+      self.appendChild(this.buildAlphabetWords(alphabet, words));
     }
     return self;
   }
 
-  private buildAlphabetBlock(alphabet: string, words: Array<Word>): FormatNodeLike {
+  private buildAlphabetWords(alphabet: string, words: Array<Word>): FormatNodeLike {
     let self = this.createNodeList();
     let resolver = this.createMarkupResolver();
     let parser = new Parser(resolver);
     self.appendElement("fo:block", (self) => {
+      self.setAttribute("id", `alphabet-${alphabet}`);
       self.setAttribute("break-before", "page");
       self.setAttribute("break-after", "page");
       self.appendElement("fo:marker", (self) => {
@@ -335,7 +352,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       });
       for (let word of words) {
         let parsedWord = parser.parse(word);
-        self.appendChild(this.buildWordBlock(parsedWord));
+        self.appendChild(this.buildWord(parsedWord));
       }
     });
     return self;
@@ -344,8 +361,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
   private buildAlphabetIndexes(alphabet: string, position: "left" | "right"): FormatNodeLike {
     let self = this.createNodeList();
     let oppositePosition = (position === "left") ? "right" : "left";
-    let alphabets = "sztdkgfvpbcqxjlrnmyha";
-    for (let currentAlphabet of alphabets) {
+    for (let currentAlphabet of ALPHABETS) {
       self.appendElement("fo:block-container", (self) => {
         self.setAttribute("space-before", ALPHABET_INDEX_GAP);
         self.setAttribute("height", ALPHABET_INDEX_HEIGHT);
@@ -363,19 +379,22 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         }
         self.appendElement("fo:block", (self) => {
           self.setAttribute("text-align", "center");
-          self.appendChild(this.buildShaleianText((self) => {
-            self.setAttribute("font-family", EUROPIAN_SHALEIAN_FONT_FAMILY);
-            self.appendChild(currentAlphabet);
-          }));
+          self.appendElement("fo:basic-link", (self) => {
+            self.setAttribute("internal-destination", `alphabet-${currentAlphabet}`);
+            self.appendChild(this.buildShaleianText((self) => {
+              self.setAttribute("font-family", EUROPIAN_SHALEIAN_FONT_FAMILY);
+              self.appendChild(currentAlphabet);
+            }));
+          });
         });
       });
     }
     return self;
   }
 
-  private buildWordBlock(word: ParsedWord<FormatNodeLike>): FormatNodeLike {
+  private buildWord(word: ParsedWord<FormatNodeLike>): FormatNodeLike {
     let self = this.createNodeList();
-    let part = word.parts["ja"]!;
+    let part = word.parts[this.language]!;
     self.appendElement("fo:block", (self) => {
       self.setAttribute("space-before", "1mm");
       self.setAttribute("space-before.conditionality", "discard");
@@ -406,22 +425,22 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         });
       });
       for (let section of part.sections) {
-        self.appendChild(this.buildSectionBlock(section));
+        self.appendChild(this.buildSection(section));
       }
     });
     return self;
   }
 
-  private buildSectionBlock(section: Section<FormatNodeLike>): FormatNodeLike {
+  private buildSection(section: Section<FormatNodeLike>): FormatNodeLike {
     let self = this.createNodeList();
-    self.appendChild(this.buildEquivalentBlock(section));
-    self.appendChild(this.buildUsageBlock(section));
-    self.appendChild(this.buildPhraseBlock(section));
-    self.appendChild(this.buildExampleBlock(section));
+    self.appendChild(this.buildEquivalent(section));
+    self.appendChild(this.buildUsage(section));
+    self.appendChild(this.buildPhrase(section));
+    self.appendChild(this.buildExample(section));
     return self;
   }
 
-  private buildEquivalentBlock(section: Section<FormatNodeLike>): FormatNodeLike {
+  private buildEquivalent(section: Section<FormatNodeLike>): FormatNodeLike {
     let self = this.createNodeList();
     let equivalents = section.getEquivalents(true);
     let meaningInformation = section.getNormalInformations(true).find((information) => information.kind === "meaning");
@@ -458,7 +477,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildUsageBlock(section: Section<FormatNodeLike>): FormatNodeLike {
+  private buildUsage(section: Section<FormatNodeLike>): FormatNodeLike {
     let self = this.createNodeList();
     let usageInformations = section.getNormalInformations(true).filter((information) => information.kind === "usage");
     for (let information of usageInformations) {
@@ -477,7 +496,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildPhraseBlock(section: Section<FormatNodeLike>): FormatNodeLike {
+  private buildPhrase(section: Section<FormatNodeLike>): FormatNodeLike {
     let self = this.createNodeList();
     let phraseInformations = section.getPhraseInformations(true);
     for (let information of phraseInformations) {
@@ -507,7 +526,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildExampleBlock(section: Section<FormatNodeLike>): FormatNodeLike {
+  private buildExample(section: Section<FormatNodeLike>): FormatNodeLike {
     let self = this.createNodeList();
     let exampleInformations = section.getExampleInformations(true);
     for (let information of exampleInformations) {
@@ -616,6 +635,25 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       callback?.call(this, self);
     });
     return self;
+  }
+
+  private createGroupedWords(words: Array<Word>): Array<[alphabet: string, words: Array<Word>]> {
+    let currentInitialAlphabet = null as string | null;
+    let currentWords = [] as Array<Word>;
+    let groupedWords = [] as Array<[string, Array<Word>]>;
+    for (let word of words) {
+      let initialAlphabet = word.name.replace(/['\+\-]/, "").charAt(0);
+      if (VOWEL_ALPHABETS.indexOf(initialAlphabet) >= 0) {
+        initialAlphabet = "a";
+      }
+      if (currentInitialAlphabet !== initialAlphabet) {
+        currentInitialAlphabet = initialAlphabet;
+        currentWords = [];
+        groupedWords.push([initialAlphabet, currentWords]);
+      }
+      currentWords.push(word);
+    }
+    return groupedWords;
   }
 
   private createMarkupResolver(): MarkupResolver<FormatNodeLike, FormatNodeLike> {
