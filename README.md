@@ -27,6 +27,6 @@ Create an instance of this class and call the `convert` method.
 
 ```typescript
 import {DictionaryFormatBuilder} from "soxsot-format";
-let builder = new DictionaryFormatBuilder(dictionary);
-let documentString = builder.convert(dictionary);  // XSL-FO string
+let builder = new DictionaryFormatBuilder("ja");  // specify the language
+let documentString = builder.convert(dictionary);  // outputs an XSL-FO string
 ```
