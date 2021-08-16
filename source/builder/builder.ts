@@ -274,28 +274,14 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
   private buildDictionaryBlock(dictionary: Dictionary): FormatNodeLike {
     let self = this.createNodeList();
     let words = Word.sortWords(Array.from(dictionary.words));
-    let alphabetData = [] as Array<[string, Array<Word>]>;
-    let currentInitialAlphabet = null as string | null;
-    let currentWords = [] as Array<Word>;
-    for (let word of words) {
-      let initialAlphabet = word.name.replace(/['\+\-]/, "").charAt(0);
-      if ("aáàâeéèêiíìîoóòôuúùû".indexOf(initialAlphabet) >= 0) {
-        initialAlphabet = "a";
-      }
-      if (currentInitialAlphabet !== initialAlphabet) {
-        currentInitialAlphabet = initialAlphabet;
-        currentWords = [];
-        alphabetData.push([initialAlphabet, currentWords]);
-      }
-      currentWords.push(word);
-    }
-    for (let [alphabet, words] of alphabetData) {
-      self.appendChild(this.buildAlphabetBlock(alphabet, words));
+    let groupedWords = this.createGroupedWords(words);
+    for (let [alphabet, words] of groupedWords) {
+      self.appendChild(this.buildAlphabet(alphabet, words));
     }
     return self;
   }
 
-  private buildAlphabetBlock(alphabet: string, words: Array<Word>): FormatNodeLike {
+  private buildAlphabet(alphabet: string, words: Array<Word>): FormatNodeLike {
     let self = this.createNodeList();
     let resolver = this.createMarkupResolver();
     let parser = new Parser(resolver);
@@ -342,7 +328,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       });
       for (let word of words) {
         let parsedWord = parser.parse(word);
-        self.appendChild(this.buildWordBlock(parsedWord));
+        self.appendChild(this.buildWord(parsedWord));
       }
     });
     return self;
@@ -380,7 +366,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildWordBlock(word: ParsedWord<FormatNodeLike>): FormatNodeLike {
+  private buildWord(word: ParsedWord<FormatNodeLike>): FormatNodeLike {
     let self = this.createNodeList();
     let part = word.parts[this.language]!;
     self.appendElement("fo:block", (self) => {
@@ -413,22 +399,22 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         });
       });
       for (let section of part.sections) {
-        self.appendChild(this.buildSectionBlock(section));
+        self.appendChild(this.buildSection(section));
       }
     });
     return self;
   }
 
-  private buildSectionBlock(section: Section<FormatNodeLike>): FormatNodeLike {
+  private buildSection(section: Section<FormatNodeLike>): FormatNodeLike {
     let self = this.createNodeList();
-    self.appendChild(this.buildEquivalentBlock(section));
-    self.appendChild(this.buildUsageBlock(section));
-    self.appendChild(this.buildPhraseBlock(section));
-    self.appendChild(this.buildExampleBlock(section));
+    self.appendChild(this.buildEquivalent(section));
+    self.appendChild(this.buildUsage(section));
+    self.appendChild(this.buildPhrase(section));
+    self.appendChild(this.buildExample(section));
     return self;
   }
 
-  private buildEquivalentBlock(section: Section<FormatNodeLike>): FormatNodeLike {
+  private buildEquivalent(section: Section<FormatNodeLike>): FormatNodeLike {
     let self = this.createNodeList();
     let equivalents = section.getEquivalents(true);
     let meaningInformation = section.getNormalInformations(true).find((information) => information.kind === "meaning");
@@ -465,7 +451,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildUsageBlock(section: Section<FormatNodeLike>): FormatNodeLike {
+  private buildUsage(section: Section<FormatNodeLike>): FormatNodeLike {
     let self = this.createNodeList();
     let usageInformations = section.getNormalInformations(true).filter((information) => information.kind === "usage");
     for (let information of usageInformations) {
@@ -484,7 +470,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildPhraseBlock(section: Section<FormatNodeLike>): FormatNodeLike {
+  private buildPhrase(section: Section<FormatNodeLike>): FormatNodeLike {
     let self = this.createNodeList();
     let phraseInformations = section.getPhraseInformations(true);
     for (let information of phraseInformations) {
@@ -514,7 +500,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildExampleBlock(section: Section<FormatNodeLike>): FormatNodeLike {
+  private buildExample(section: Section<FormatNodeLike>): FormatNodeLike {
     let self = this.createNodeList();
     let exampleInformations = section.getExampleInformations(true);
     for (let information of exampleInformations) {
@@ -623,6 +609,25 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       callback?.call(this, self);
     });
     return self;
+  }
+
+  private createGroupedWords(words: Array<Word>): Array<[alphabet: string, words: Array<Word>]> {
+    let currentInitialAlphabet = null as string | null;
+    let currentWords = [] as Array<Word>;
+    let groupedWords = [] as Array<[string, Array<Word>]>;
+    for (let word of words) {
+      let initialAlphabet = word.name.replace(/['\+\-]/, "").charAt(0);
+      if ("aáàâeéèêiíìîoóòôuúùû".indexOf(initialAlphabet) >= 0) {
+        initialAlphabet = "a";
+      }
+      if (currentInitialAlphabet !== initialAlphabet) {
+        currentInitialAlphabet = initialAlphabet;
+        currentWords = [];
+        groupedWords.push([initialAlphabet, currentWords]);
+      }
+      currentWords.push(word);
+    }
+    return groupedWords;
   }
 
   private createMarkupResolver(): MarkupResolver<FormatNodeLike, FormatNodeLike> {
