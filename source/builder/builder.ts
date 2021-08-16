@@ -174,7 +174,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       self.appendElement("fo:flow", (self) => {
         self.setAttribute("flow-name", "main.body");
         self.appendElement("fo:block", (self) => {
-          self.appendChild(this.buildDictionaryBlock(dictionary));
+          self.appendChild(this.buildDictionary(dictionary));
         });
       });
     });
@@ -271,21 +271,22 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildDictionaryBlock(dictionary: Dictionary): FormatNodeLike {
+  private buildDictionary(dictionary: Dictionary): FormatNodeLike {
     let self = this.createNodeList();
     let words = Word.sortWords(Array.from(dictionary.words));
     let groupedWords = this.createGroupedWords(words);
     for (let [alphabet, words] of groupedWords) {
-      self.appendChild(this.buildAlphabet(alphabet, words));
+      self.appendChild(this.buildAlphabetWords(alphabet, words));
     }
     return self;
   }
 
-  private buildAlphabet(alphabet: string, words: Array<Word>): FormatNodeLike {
+  private buildAlphabetWords(alphabet: string, words: Array<Word>): FormatNodeLike {
     let self = this.createNodeList();
     let resolver = this.createMarkupResolver();
     let parser = new Parser(resolver);
     self.appendElement("fo:block", (self) => {
+      self.setAttribute("id", `alphabet-${alphabet}`);
       self.setAttribute("break-before", "page");
       self.setAttribute("break-after", "page");
       self.appendElement("fo:marker", (self) => {
@@ -356,10 +357,13 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         }
         self.appendElement("fo:block", (self) => {
           self.setAttribute("text-align", "center");
-          self.appendChild(this.buildShaleianText((self) => {
-            self.setAttribute("font-family", EUROPIAN_SHALEIAN_FONT_FAMILY);
-            self.appendChild(currentAlphabet);
-          }));
+          self.appendElement("fo:basic-link", (self) => {
+            self.setAttribute("internal-destination", `alphabet-${currentAlphabet}`);
+            self.appendChild(this.buildShaleianText((self) => {
+              self.setAttribute("font-family", EUROPIAN_SHALEIAN_FONT_FAMILY);
+              self.appendChild(currentAlphabet);
+            }));
+          });
         });
       });
     }
