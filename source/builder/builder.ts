@@ -62,9 +62,13 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
   }
 
   public convert(dictionary: Dictionary): string {
-    let document = this.buildRoot(dictionary);
-    let output = document.toString();
-    return output;
+    if (dictionary.settings.version === "S") {
+      let document = this.buildRoot(dictionary);
+      let output = document.toString();
+      return output;
+    } else {
+      throw new Error("unsupported version");
+    }
   }
 
   protected createDocument(tagName: string): FormatDocument {
