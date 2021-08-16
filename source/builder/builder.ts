@@ -48,6 +48,9 @@ const TEXT_COLOR = "rgb-icc(#CMYK, 0, 0, 0, 1)";
 const HIGHLIGHT_COLOR = "rgb-icc(#CMYK, 0, 0.8, 0, 0)";
 const GRAY_COLOR = "rgb-icc(#CMYK, 0, 0, 0, 0.6)";
 
+const ALPHABETS = "sztdkgfvpbcqxjlrnmyha";
+const VOWEL_ALPHABETS = "aáàâeéèêiíìîoóòôuúùû";
+
 
 export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, string, FormatDocument> {
 
@@ -81,6 +84,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       self.appendElement("fo:layout-master-set", (self) => {
         self.appendChild(this.buildMainPageMaster());
       });
+      self.appendChild(this.buildBookmark());
       self.appendChild(this.buildMainPageSequence(dictionary));
     });
     return self;
@@ -177,6 +181,21 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
           self.appendChild(this.buildDictionary(dictionary));
         });
       });
+    });
+    return self;
+  }
+
+  private buildBookmark(): FormatNodeLike {
+    let self = this.createNodeList();
+    self.appendElement("fo:bookmark-tree", (self) => {
+      for (let alphabet of ALPHABETS) {
+        self.appendElement("fo:bookmark", (self) => {
+          self.setAttribute("internal-destination", `alphabet-${alphabet}`);
+          self.appendElement("fo:bookmark-title", (self) => {
+            self.appendChild((alphabet === "a") ? "a–u" : alphabet);
+          });
+        });
+      }
     });
     return self;
   }
@@ -338,8 +357,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
   private buildAlphabetIndexes(alphabet: string, position: "left" | "right"): FormatNodeLike {
     let self = this.createNodeList();
     let oppositePosition = (position === "left") ? "right" : "left";
-    let alphabets = "sztdkgfvpbcqxjlrnmyha";
-    for (let currentAlphabet of alphabets) {
+    for (let currentAlphabet of ALPHABETS) {
       self.appendElement("fo:block-container", (self) => {
         self.setAttribute("space-before", ALPHABET_INDEX_GAP);
         self.setAttribute("height", ALPHABET_INDEX_HEIGHT);
@@ -621,7 +639,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     let groupedWords = [] as Array<[string, Array<Word>]>;
     for (let word of words) {
       let initialAlphabet = word.name.replace(/['\+\-]/, "").charAt(0);
-      if ("aáàâeéèêiíìîoóòôuúùû".indexOf(initialAlphabet) >= 0) {
+      if (VOWEL_ALPHABETS.indexOf(initialAlphabet) >= 0) {
         initialAlphabet = "a";
       }
       if (currentInitialAlphabet !== initialAlphabet) {
