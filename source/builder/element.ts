@@ -1,21 +1,22 @@
 //
 
 import {
-  NodeCallback,
-  NodeLike,
-  SimpleDocument,
-  SimpleElement
-} from "../module";
+  BaseDocument,
+  BaseDocumentFragment,
+  BaseElement,
+  BaseText,
+  NodeLikeOf
+} from "@zenml/zenml";
 
 
 const MAXIMUM_RATIO = "1.4";
 const MINIMUM_RATIO = "0.8";
 
 
-export class FormatDocument extends SimpleDocument<FormatElement, FormatDocument> {
+export class FormatDocument extends BaseDocument<FormatDocument, FormatDocumentFragment, FormatElement, FormatText> {
 
-  public createPageMaster(pageSize: PageSize, bleedSize: string, callback?: NodeCallback<FormatElement>): NodeLike<FormatElement, string, FormatDocument> {
-    let self = this.createNodeList();
+  public createPageMaster(pageSize: PageSize, bleedSize: string, callback?: (self: FormatElement) => void): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:simple-page-master", (self) => {
       self.setAttribute("page-width", pageSize.width);
       self.setAttribute("page-height", pageSize.height);
@@ -29,8 +30,8 @@ export class FormatDocument extends SimpleDocument<FormatElement, FormatDocument
     return self;
   }
 
-  public createRegionBody(pageSpaces: PageSpaces, position: "left" | "right", callback?: NodeCallback<FormatElement>): NodeLike<FormatElement, string, FormatDocument> {
-    let self = this.createNodeList();
+  public createRegionBody(pageSpaces: PageSpaces, position: "left" | "right", callback?: (self: FormatElement) => void): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:region-body", (self) => {
       self.setAttribute("margin-top", pageSpaces.top);
       self.setAttribute("margin-bottom", pageSpaces.bottom);
@@ -41,8 +42,8 @@ export class FormatDocument extends SimpleDocument<FormatElement, FormatDocument
     return self;
   }
 
-  public createRegionBefore(extent: string, callback?: NodeCallback<FormatElement>): NodeLike<FormatElement, string, FormatDocument> {
-    let self = this.createNodeList();
+  public createRegionBefore(extent: string, callback?: (self: FormatElement) => void): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:region-before", (self) => {
       self.setAttribute("extent", extent);
       callback?.call(this, self);
@@ -50,8 +51,8 @@ export class FormatDocument extends SimpleDocument<FormatElement, FormatDocument
     return self;
   }
 
-  public createRegionAfter(extent: string, callback?: NodeCallback<FormatElement>): NodeLike<FormatElement, string, FormatDocument> {
-    let self = this.createNodeList();
+  public createRegionAfter(extent: string, callback?: (self: FormatElement) => void): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:region-after", (self) => {
       self.setAttribute("extent", extent);
       callback?.call(this, self);
@@ -59,8 +60,8 @@ export class FormatDocument extends SimpleDocument<FormatElement, FormatDocument
     return self;
   }
 
-  public createRegionStart(extent: string, callback?: NodeCallback<FormatElement>): NodeLike<FormatElement, string, FormatDocument> {
-    let self = this.createNodeList();
+  public createRegionStart(extent: string, callback?: (self: FormatElement) => void): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:region-start", (self) => {
       self.setAttribute("extent", extent);
       callback?.call(this, self);
@@ -68,8 +69,8 @@ export class FormatDocument extends SimpleDocument<FormatElement, FormatDocument
     return self;
   }
 
-  public createRegionEnd(extent: string, callback?: NodeCallback<FormatElement>): NodeLike<FormatElement, string, FormatDocument> {
-    let self = this.createNodeList();
+  public createRegionEnd(extent: string, callback?: (self: FormatElement) => void): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:region-end", (self) => {
       self.setAttribute("extent", extent);
       callback?.call(this, self);
@@ -77,10 +78,22 @@ export class FormatDocument extends SimpleDocument<FormatElement, FormatDocument
     return self;
   }
 
+  protected prepareDocumentFragment(): FormatDocumentFragment {
+    return new FormatDocumentFragment(this);
+  }
+
+  protected prepareElement(tagName: string): FormatElement {
+    return new FormatElement(this, tagName);
+  }
+
+  protected prepareTextNode(content: string): FormatText {
+    return new FormatText(this, content);
+  }
+
 }
 
 
-export class FormatElement extends SimpleElement<FormatElement, FormatDocument> {
+export class FormatElement extends BaseElement<FormatDocument, FormatDocumentFragment, FormatElement, FormatText> {
 
   public makeElastic(attributeName: string, minimumRatio?: number, maximumRatio?: number): void {
     let originalSpace = this.getAttribute(attributeName);
@@ -107,6 +120,16 @@ export class FormatElement extends SimpleElement<FormatElement, FormatDocument> 
     this.setAttribute("relative-position", "relative");
     this.setAttribute("top", "0.1em");
   }
+
+}
+
+
+export class FormatDocumentFragment extends BaseDocumentFragment<FormatDocument, FormatDocumentFragment, FormatElement, FormatText> {
+
+}
+
+
+export class FormatText extends BaseText<FormatDocument, FormatDocumentFragment, FormatElement, FormatText> {
 
 }
 

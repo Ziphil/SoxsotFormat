@@ -1,6 +1,10 @@
 //
 
 import {
+  BaseBuilder,
+  NodeLikeOf
+} from "@zenml/zenml";
+import {
   Dictionary,
   MarkupResolver,
   ParsedWord,
@@ -8,12 +12,6 @@ import {
   Section,
   Word
 } from "soxsot";
-import {
-  DocumentBuilder,
-  NodeCallback,
-  NodeLike,
-  NodeList
-} from "../module";
 import {
   FormatDocument,
   FormatElement
@@ -52,12 +50,13 @@ const ALPHABETS = "sztdkgfvpbcqxjlrnmyha";
 const VOWEL_ALPHABETS = "aáàâeéèêiíìîoóòôuúùû";
 
 
-export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, string, FormatDocument> {
+export class DictionaryFormatBuilder extends BaseBuilder<FormatDocument> {
 
   private readonly language: string;
 
   public constructor(language: string) {
-    super();
+    let document = new FormatDocument();
+    super(document);
     this.language = language;
   }
 
@@ -71,13 +70,9 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     }
   }
 
-  protected createDocument(tagName: string): FormatDocument {
-    let document = new FormatDocument(tagName, FormatElement);
-    return document;
-  }
-
   private buildRoot(dictionary: Dictionary): FormatDocument {
-    let self = this.buildDocument("fo:root", (self) => {
+    let self = this.document;
+    self.appendElement("fo:root", (self) => {
       self.setAttribute("xmlns:fo", "http://www.w3.org/1999/XSL/Format");
       self.setAttribute("xmlns:axf", "http://www.antennahouse.com/names/XSL/Extensions");
       self.setAttribute("xml:lang", this.language);
@@ -94,8 +89,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildMainPageMaster(): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildMainPageMaster(): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendChild(this.document.createPageMaster(PAGE_SIZE, BLEED_SIZE, (self) => {
       self.setAttribute("master-name", "main.left");
       self.appendChild(this.document.createRegionBody(PAGE_SPACES, "left", (self) => {
@@ -150,8 +145,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildMainPageSequence(dictionary: Dictionary): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildMainPageSequence(dictionary: Dictionary): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:page-sequence", (self) => {
       self.setAttribute("master-reference", "section");
       self.setAttribute("initial-page-number", "auto-even");
@@ -189,14 +184,14 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildBookmark(): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildBookmark(): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:bookmark-tree", (self) => {
       for (let alphabet of ALPHABETS) {
         self.appendElement("fo:bookmark", (self) => {
           self.setAttribute("internal-destination", `alphabet-${alphabet}`);
           self.appendElement("fo:bookmark-title", (self) => {
-            self.appendChild((alphabet === "a") ? "a–u" : alphabet);
+            self.appendTextNode((alphabet === "a") ? "a–u" : alphabet);
           });
         });
       }
@@ -204,8 +199,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildHeader(position: "left" | "right"): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildHeader(position: "left" | "right"): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:block-container", (self) => {
       self.setAttribute("height", `${HEADER_EXTENT} + ${BLEED_SIZE}`);
       self.setAttribute("margin-top", `-1 * ${BLEED_SIZE}`);
@@ -246,8 +241,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildFooter(position: "left" | "right"): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildFooter(position: "left" | "right"): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:block-container", (self) => {
       self.setAttribute("height", `${FOOTER_EXTENT} + ${BLEED_SIZE}`);
       self.setAttribute("margin-bottom", `-1 * ${BLEED_SIZE}`);
@@ -274,8 +269,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildSide(position: "left" | "right"): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildSide(position: "left" | "right"): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:block-container", (self) => {
       self.setAttribute("width", `${SIDE_EXTENT} + ${BLEED_SIZE}`);
       self.setAttribute("height", `${PAGE_SIZE.height} - ${PAGE_SPACES.top} - ${PAGE_SPACES.bottom}`);
@@ -294,8 +289,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildDictionary(dictionary: Dictionary): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildDictionary(dictionary: Dictionary): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     let words = Word.sortWords(Array.from(dictionary.words));
     let groupedWords = this.createGroupedWords(words);
     for (let [alphabet, words] of groupedWords) {
@@ -304,8 +299,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildAlphabetWords(alphabet: string, words: Array<Word>): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildAlphabetWords(alphabet: string, words: Array<Word>): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     let resolver = this.createMarkupResolver();
     let parser = new Parser(resolver);
     self.appendElement("fo:block", (self) => {
@@ -314,7 +309,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       self.setAttribute("break-after", "page");
       self.appendElement("fo:marker", (self) => {
         self.setAttribute("marker-class-name", "alphabet");
-        self.appendChild(alphabet);
+        self.appendTextNode(alphabet);
       });
       self.appendElement("fo:marker", (self) => {
         self.setAttribute("marker-class-name", "left-side");
@@ -345,7 +340,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
             self.setAttribute("border-top-style", "double");
             self.setAttribute("border-bottom-style", "double");
             self.appendChild(this.buildShaleianText((self) => {
-              self.appendChild((alphabet === "a") ? "a–u" : alphabet);
+              self.appendTextNode((alphabet === "a") ? "a–u" : alphabet);
             }));
           });
         });
@@ -358,8 +353,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildAlphabetIndexes(alphabet: string, position: "left" | "right"): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildAlphabetIndexes(alphabet: string, position: "left" | "right"): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     let oppositePosition = (position === "left") ? "right" : "left";
     for (let currentAlphabet of ALPHABETS) {
       self.appendElement("fo:block-container", (self) => {
@@ -383,7 +378,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
             self.setAttribute("internal-destination", `alphabet-${currentAlphabet}`);
             self.appendChild(this.buildShaleianText((self) => {
               self.setAttribute("font-family", EUROPIAN_SHALEIAN_FONT_FAMILY);
-              self.appendChild(currentAlphabet);
+              self.appendTextNode(currentAlphabet);
             }));
           });
         });
@@ -392,8 +387,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildWord(word: ParsedWord<FormatNodeLike>): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildWord(word: ParsedWord<NodeLikeOf<FormatDocument>>): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     let part = word.parts[this.language]!;
     self.appendElement("fo:block", (self) => {
       self.setAttribute("space-before", "1mm");
@@ -404,7 +399,7 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       self.makeElastic("space-after");
       self.appendElement("fo:marker", (self) => {
         self.setAttribute("marker-class-name", "name");
-        self.appendChild(word.name);
+        self.appendTextNode(word.name);
       });
       self.appendElement("fo:block", (self) => {
         self.setAttribute("keep-with-next.within-column", "always");
@@ -416,12 +411,12 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
           self.setAttribute("color", HIGHLIGHT_COLOR);
           self.appendChild(this.buildShaleianText((self) => {
             self.setAttribute("font-family", EUROPIAN_SHALEIAN_FONT_FAMILY);
-            self.appendChild(word.name);
+            self.appendTextNode(word.name);
           }));
         });
         self.appendElement("fo:inline", (self) => {
           self.setAttribute("space-start", "0.8mm");
-          self.appendChild(`/${word.pronunciation}/`);
+          self.appendTextNode(`/${word.pronunciation}/`);
         });
       });
       for (let section of part.sections) {
@@ -431,8 +426,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildSection(section: Section<FormatNodeLike>): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildSection(section: Section<NodeLikeOf<FormatDocument>>): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendChild(this.buildEquivalent(section));
     self.appendChild(this.buildUsage(section));
     self.appendChild(this.buildPhrase(section));
@@ -440,8 +435,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildEquivalent(section: Section<FormatNodeLike>): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildEquivalent(section: Section<NodeLikeOf<FormatDocument>>): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     let equivalents = section.getEquivalents(true);
     let meaningInformation = section.getNormalInformations(true).find((information) => information.kind === "meaning");
     self.appendElement("fo:block", (self) => {
@@ -459,9 +454,9 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
             self.appendElement("fo:inline", (self) => {
               self.setAttribute("space-end", "0.8mm");
               self.setAttribute("font-size", "80%");
-              self.appendChild("(");
+              self.appendTextNode("(");
               self.appendChild(equivalent.frame!);
-              self.appendChild(")");
+              self.appendTextNode(")");
             });
           }
           self.appendChild(this.buildEquivalentNames(equivalent.names));
@@ -477,8 +472,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildUsage(section: Section<FormatNodeLike>): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildUsage(section: Section<NodeLikeOf<FormatDocument>>): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     let usageInformations = section.getNormalInformations(true).filter((information) => information.kind === "usage");
     for (let information of usageInformations) {
       self.appendElement("fo:block", (self) => {
@@ -496,8 +491,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildPhrase(section: Section<FormatNodeLike>): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildPhrase(section: Section<NodeLikeOf<FormatDocument>>): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     let phraseInformations = section.getPhraseInformations(true);
     for (let information of phraseInformations) {
       self.appendElement("fo:block", (self) => {
@@ -526,8 +521,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildExample(section: Section<FormatNodeLike>): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildExample(section: Section<NodeLikeOf<FormatDocument>>): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     let exampleInformations = section.getExampleInformations(true);
     for (let information of exampleInformations) {
       self.appendElement("fo:block", (self) => {
@@ -547,8 +542,8 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return self;
   }
 
-  private buildEquivalentNames(names: ReadonlyArray<FormatNodeLike>): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildEquivalentNames(names: ReadonlyArray<NodeLikeOf<FormatDocument>>): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:inline", (self) => {
       for (let i = 0 ; i < names.length ; i ++) {
         self.appendElement("fo:inline", (self) => {
@@ -556,15 +551,15 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
           self.appendChild(names[i]);
         });
         if (i !== names.length - 1) {
-          self.appendChild(", ");
+          self.appendTextNode(", ");
         }
       }
     });
     return self;
   }
 
-  private buildTag(string: string, backgroundColor: string): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildTag(string: string, backgroundColor: string): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:inline-container", (self) => {
       self.setAttribute("space-end", "1mm");
       self.appendElement("fo:block", (self) => {
@@ -574,14 +569,14 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         self.setAttribute("color", "white");
         self.setAttribute("background-color", backgroundColor);
         self.setAttribute("axf:border-radius", "0.2em");
-        self.appendChild(string);
+        self.appendTextNode(string);
       });
     });
     return self;
   }
 
-  private buildSmallHeader(string: string): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildSmallHeader(string: string): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:inline-container", (self) => {
       self.setAttribute("space-end", "1mm");
       self.appendElement("fo:block", (self) => {
@@ -593,14 +588,14 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
         self.setAttribute("border-color", GRAY_COLOR);
         self.setAttribute("border-style", "solid");
         self.setAttribute("axf:border-radius", "0.2em");
-        self.appendChild(string);
+        self.appendTextNode(string);
       });
     });
     return self;
   }
 
-  private buildEquivalentSeparator(): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildEquivalentSeparator(): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:inline", (self) => {
       self.setAttribute("space-start", "1mm");
       self.setAttribute("space-end", "1mm");
@@ -608,13 +603,13 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       self.setAttribute("color", GRAY_COLOR);
       self.setAttribute("relative-position", "relative");
       self.setAttribute("bottom", "0.2em");
-      self.appendChild("||");
+      self.appendTextNode("||");
     });
     return self;
   }
 
-  private buildExampleSeparator(): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildExampleSeparator(): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:inline", (self) => {
       self.setAttribute("space-start", "1mm");
       self.setAttribute("space-end", "1mm");
@@ -622,13 +617,13 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
       self.setAttribute("color", GRAY_COLOR);
       self.setAttribute("relative-position", "relative");
       self.setAttribute("bottom", "0.1em");
-      self.appendChild("▶");
+      self.appendTextNode("▶");
     });
     return self;
   }
 
-  private buildShaleianText(callback?: FormatNodeCallback): FormatNodeLike {
-    let self = this.createNodeList();
+  private buildShaleianText(callback?: FormatNodeCallback): NodeLikeOf<FormatDocument> {
+    let self = this.createDocumentFragment();
     self.appendElement("fo:inline", (self) => {
       self.setAttribute("font-family", SHALEIAN_FONT_FAMILY);
       self.setAttribute("font-size", SHALEIAN_FONT_SIZE);
@@ -656,37 +651,53 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
     return groupedWords;
   }
 
-  private createMarkupResolver(): MarkupResolver<FormatNodeLike, FormatNodeLike> {
-    let resolver = new MarkupResolver<FormatNodeLike, FormatNodeLike>({
+  private createMarkupResolver(): MarkupResolver<NodeLikeOf<FormatDocument>, NodeLikeOf<FormatDocument>> {
+    let resolver = new MarkupResolver<NodeLikeOf<FormatDocument>, NodeLikeOf<FormatDocument>>({
       resolveLink: (name, children) => {
-        let node = this.createNodeList();
+        let self = this.createDocumentFragment();
         for (let child of children) {
-          node.appendChild(child);
-        }
-        return node;
-      },
-      resolveBracket: (children) => {
-        let node = this.buildShaleianText((self) => {
-          for (let child of children) {
+          if (typeof child === "string") {
+            self.appendTextNode(child);
+          } else {
             self.appendChild(child);
           }
+        }
+        return self;
+      },
+      resolveBracket: (children) => {
+        let self = this.buildShaleianText((self) => {
+          for (let child of children) {
+            if (typeof child === "string") {
+              self.appendTextNode(child);
+            } else {
+              self.appendChild(child);
+            }
+          }
         });
-        return node;
+        return self;
       },
       resolveSlash: (children) => {
-        let node = this.createElement("fo:inline");
-        node.setAttribute("font-style", "italic");
+        let self = this.createElement("fo:inline");
+        self.setAttribute("font-style", "italic");
         for (let child of children) {
-          node.appendChild(child);
+          if (typeof child === "string") {
+            self.appendTextNode(child);
+          } else {
+            self.appendChild(child);
+          }
         }
-        return node;
+        return self;
       },
       join: (nodes) => {
-        let node = this.createNodeList();
+        let self = this.createDocumentFragment();
         for (let child of nodes) {
-          node.appendChild(child);
+          if (typeof child === "string") {
+            self.appendTextNode(child);
+          } else {
+            self.appendChild(child);
+          }
         }
-        return node;
+        return self;
       }
     });
     return resolver;
@@ -695,5 +706,4 @@ export class DictionaryFormatBuilder extends DocumentBuilder<FormatElement, stri
 }
 
 
-export type FormatNodeLike = NodeLike<FormatElement, string, FormatDocument>;
-export type FormatNodeCallback = NodeCallback<FormatElement>;
+export type FormatNodeCallback = (self: FormatElement) => void;
