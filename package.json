@@ -28,6 +28,7 @@
     "verbose": true
   },
   "devDependencies": {
+    "@types/parsimmon": "^1.10.6",
     "@types/xml-escape": "^1.1.0",
     "@typescript-eslint/eslint-plugin": "^4.29.1",
     "@typescript-eslint/parser": "^4.29.1",
