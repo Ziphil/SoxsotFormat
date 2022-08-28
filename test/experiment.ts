@@ -13,10 +13,10 @@ import {
 
 
 async function typeset(path: string): Promise<void> {
-  let loader = new DirectoryLoader(path);
-  let dictionary = await loader.asPromise();
-  let builder = new DictionaryFormatBuilder("ja");
-  let documentString = builder.convert(dictionary);
+  const loader = new DirectoryLoader(path);
+  const dictionary = await loader.asPromise();
+  const builder = new DictionaryFormatBuilder("ja");
+  const documentString = builder.convert(dictionary);
   await fs.mkdir("./out", {recursive: true});
   await fs.writeFile("./out/main.fo", documentString, {encoding: "utf8"});
   await execa("AHFCmd", ["-pgbar", "-x", "3", "-d", "out/main.fo", "-p", "@PDF", "-o", "out/document.pdf"]);

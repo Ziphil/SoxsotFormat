@@ -16,7 +16,7 @@ const MINIMUM_RATIO = "0.8";
 export class FormatDocument extends BaseDocument<FormatDocument, FormatDocumentFragment, FormatElement, FormatText> {
 
   public createPageMaster(pageSize: PageSize, bleedSize: string, callback?: (self: FormatElement) => void): NodeLikeOf<FormatDocument> {
-    let self = this.createDocumentFragment();
+    const self = this.createDocumentFragment();
     self.appendElement("fo:simple-page-master", (self) => {
       self.setAttribute("page-width", pageSize.width);
       self.setAttribute("page-height", pageSize.height);
@@ -31,7 +31,7 @@ export class FormatDocument extends BaseDocument<FormatDocument, FormatDocumentF
   }
 
   public createRegionBody(pageSpaces: PageSpaces, position: "left" | "right", callback?: (self: FormatElement) => void): NodeLikeOf<FormatDocument> {
-    let self = this.createDocumentFragment();
+    const self = this.createDocumentFragment();
     self.appendElement("fo:region-body", (self) => {
       self.setAttribute("margin-top", pageSpaces.top);
       self.setAttribute("margin-bottom", pageSpaces.bottom);
@@ -43,7 +43,7 @@ export class FormatDocument extends BaseDocument<FormatDocument, FormatDocumentF
   }
 
   public createRegionBefore(extent: string, callback?: (self: FormatElement) => void): NodeLikeOf<FormatDocument> {
-    let self = this.createDocumentFragment();
+    const self = this.createDocumentFragment();
     self.appendElement("fo:region-before", (self) => {
       self.setAttribute("extent", extent);
       callback?.call(this, self);
@@ -52,7 +52,7 @@ export class FormatDocument extends BaseDocument<FormatDocument, FormatDocumentF
   }
 
   public createRegionAfter(extent: string, callback?: (self: FormatElement) => void): NodeLikeOf<FormatDocument> {
-    let self = this.createDocumentFragment();
+    const self = this.createDocumentFragment();
     self.appendElement("fo:region-after", (self) => {
       self.setAttribute("extent", extent);
       callback?.call(this, self);
@@ -61,7 +61,7 @@ export class FormatDocument extends BaseDocument<FormatDocument, FormatDocumentF
   }
 
   public createRegionStart(extent: string, callback?: (self: FormatElement) => void): NodeLikeOf<FormatDocument> {
-    let self = this.createDocumentFragment();
+    const self = this.createDocumentFragment();
     self.appendElement("fo:region-start", (self) => {
       self.setAttribute("extent", extent);
       callback?.call(this, self);
@@ -70,7 +70,7 @@ export class FormatDocument extends BaseDocument<FormatDocument, FormatDocumentF
   }
 
   public createRegionEnd(extent: string, callback?: (self: FormatElement) => void): NodeLikeOf<FormatDocument> {
-    let self = this.createDocumentFragment();
+    const self = this.createDocumentFragment();
     self.appendElement("fo:region-end", (self) => {
       self.setAttribute("extent", extent);
       callback?.call(this, self);
@@ -96,7 +96,7 @@ export class FormatDocument extends BaseDocument<FormatDocument, FormatDocumentF
 export class FormatElement extends BaseElement<FormatDocument, FormatDocumentFragment, FormatElement, FormatText> {
 
   public makeElastic(attributeName: string, minimumRatio?: number, maximumRatio?: number): void {
-    let originalSpace = this.getAttribute(attributeName);
+    const originalSpace = this.getAttribute(attributeName);
     if (originalSpace !== null) {
       this.setAttribute(`${attributeName}.minimum`, `(${originalSpace}) * ${minimumRatio ?? MINIMUM_RATIO}`);
       this.setAttribute(`${attributeName}.maximum`, `(${originalSpace}) * ${maximumRatio ?? MAXIMUM_RATIO}`);
