@@ -18,10 +18,10 @@ import {
 } from "./element";
 
 
-const EUROPIAN_FONT_FAMILY = "Linux Libertine G";
-const JAPANESE_FONT_FAMILY = "源ノ明朝";
+const EUROPIAN_FONT_FAMILY = "Brill";
+const JAPANESE_FONT_FAMILY = "Yu Mincho";
 const EUROPIAN_SHALEIAN_FONT_FAMILY = "Vekos";
-const JAPANESE_SHALEIAN_FONT_FAMILY = "源ノ角ゴシック";
+const JAPANESE_SHALEIAN_FONT_FAMILY = "Yu Gothic Medium";
 const SPECIAL_FONT_FAMILY = "Gill Sans Nova Cn Book";
 
 const FONT_FAMILY = EUROPIAN_FONT_FAMILY + ", " + JAPANESE_FONT_FAMILY;
@@ -29,7 +29,7 @@ const SHALEIAN_FONT_FAMILY = EUROPIAN_SHALEIAN_FONT_FAMILY + ", " + JAPANESE_SHA
 
 const FONT_SIZE = "8pt";
 const SHALEIAN_FONT_SIZE = "100%";
-const LINE_HEIGHT = "1.2";
+const LINE_HEIGHT = "1.3";
 
 const PAGE_SIZE = {width: "148mm", height: "220mm"};
 const PAGE_SPACES = {top: "15mm", bottom: "15mm", outer: "14mm", inner: "18mm"};
@@ -85,6 +85,7 @@ export class DictionaryFormatBuilder extends BaseBuilder<FormatDocument> {
       self.setAttribute("xml:lang", this.language);
       self.setAttribute("font-family", FONT_FAMILY);
       self.setAttribute("font-size", FONT_SIZE);
+      self.setAttribute("font-variant", "lining-nums");
       self.setAttribute("color", TEXT_COLOR);
       self.setAttribute("axf:ligature-mode", "all");
       self.appendElement("fo:layout-master-set", (self) => {
