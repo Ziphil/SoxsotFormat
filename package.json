@@ -50,8 +50,8 @@
     "typescript": "^4.5.5"
   },
   "dependencies": {
-    "@zenml/zenml": "^1.1.0",
-    "soxsot": "^0.6.1",
+    "@zenml/zenml": "^1.3.0",
+    "soxsot": "^0.8.1",
     "xml-escape": "^1.1.0"
   }
 }
