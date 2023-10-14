@@ -61,10 +61,17 @@ export class DictionaryFormatBuilder extends BaseBuilder<FormatDocument> {
   }
 
   public convert(dictionary: Dictionary): string {
-    if (dictionary.settings.version === "S") {
-      const document = this.buildRoot(dictionary);
-      const output = document.toString();
-      return output;
+    const match = dictionary.settings.version.match(/^(\w+)(?:\.(\w+))?$/);
+    if (match !== null) {
+      const generation = match[1] ?? "";
+      const subgeneration = match[2] !== undefined ? parseInt(match[2], 10) : 0;
+      if (generation === "6" || generation === "7" || generation === "S") {
+        const document = this.buildRoot(dictionary);
+        const output = document.toString();
+        return output;
+      } else {
+        throw new Error("unsupported version");
+      }
     } else {
       throw new Error("unsupported version");
     }
